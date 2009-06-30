@@ -3,10 +3,12 @@ class CreateCommitedFile < ActiveRecord::Migration
     create_table :commitedfiles do |t|
       t.timestamps
 
-      t.column :path, :string, :null => false
-      t.column :bits, :float, :null => false
-      t.column :tokens, :integer, :null => false
-      t.column :types, :integer, :null => false
+      t.column :path,       :string, :null => false
+      t.column :rate,       :float, :null => false
+      t.column :iid,        :float, :null => false
+      t.column :entropy1,   :float, :null => false
+      t.column :entropy2,   :float, :null => false
+      t.column :tokens,     :integer, :null => false
 
       t.belongs_to :commit
     end
