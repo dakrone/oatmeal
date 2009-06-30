@@ -1,6 +1,6 @@
-class CreateCommitedFile < ActiveRecord::Migration
+class CreateCommittedFile < ActiveRecord::Migration
   def self.up
-    create_table :commitedfiles do |t|
+    create_table :committedfiles do |t|
       t.timestamps
 
       t.column :path,       :string, :null => false
