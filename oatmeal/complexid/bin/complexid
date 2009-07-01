@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'complexid'
+require 'find'
+require 'rbconfig'
+require 'yaml'
+
+dir = ARGV[0] || "."
+
+complexid = Oatmeal::Complexid.new("../../db/dev.yml")
+
+complexid.process_directory(dir)
+
+puts "=" * 80
+puts complexid.statistics.to_yaml
+
+# TODO: Add to directory
+

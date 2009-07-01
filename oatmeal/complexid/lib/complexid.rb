@@ -3,6 +3,7 @@
 # Code from: http://eigenclass.org/hiki/Lexical+complexity+in+Ruby
 
 require 'matrix'
+require 'find'
 
 class Object
   _stationary_distribution_cache = {}
@@ -50,7 +51,6 @@ module Oatmeal
             next unless /\.rb$/ =~ file
             groupname = File.dirname(file).split(%r{/})[1]
             groupname = File.basename(file)[/[^.]+/] if groupname.nil?
-            puts "Processing #{file} (under #{groupname})"
 
             t_matrix, freqs, indices, tokens = transition_matrix(file)
             if t_matrix
@@ -73,7 +73,7 @@ module Oatmeal
               h_eq2 = Math.log(t_matrix.row_size) / LOG2
 
               (@statistics[groupname] ||= []) << [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
-              p [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
+              #p [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
               # [file, 
               #  h_rate  either the entropy rate of the markov chain if there is
               #          a stationary distribution or the weighted sum of the
@@ -91,6 +91,7 @@ module Oatmeal
           end
         end
       end
+      @statistics
     end
 
 
@@ -154,24 +155,4 @@ module Oatmeal
 
   end
 end
-
-if __FILE__ == $0
-
-  require 'find'
-  require 'rbconfig'
-  require 'yaml'
-
-  dir = ARGV[0]
-
-  complexid = Oatmeal::Complexid.new("../../db/dev.yml")
-
-  complexid.process_directory(dir)
-
-  puts "=" * 80
-  puts complexid.statistics.to_yaml
-
-  # TODO: Add to directory
-
-end
-
 
