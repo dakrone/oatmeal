@@ -4,9 +4,9 @@ SPEC_FILE_DIR = File.dirname(__FILE__) + "/spec_files"
 SPEC_EXAMPLE_BASE = "a"
 SPEC_EXAMPLE_FILE = "./a.rb"
 KNOWN_STATS = [SPEC_EXAMPLE_FILE, "0.570645834224529", "0.586986749301636", "3.40291187981663", "3.70043971814109", "22"]
+SPEC_URL = "git://github.com/dakrone/ricepaper.git"
 
 require 'complexid'
-require 'pp'
 
 describe Oatmeal::Complexid do
   before :each do
@@ -30,7 +30,10 @@ describe Oatmeal::Complexid do
     stats[4].to_s.should == KNOWN_STATS[4]
   end
 
-  it 'should check out the latest git commit given a url'
+  it 'should check out the latest git commit given a url' do
+    loc = @c.git_checkout_url(SPEC_URL)
+    loc.should_not be_nil
+  end
 
   it 'should fetch work items out of the queue'
 

@@ -40,7 +40,23 @@ module Oatmeal
 
     def initialize(dbconf)
       @dbconfig = YAML::load(File.open(dbconf))
+
+      @gitstorage = File.dirname(__FILE__) + "/../git-storage"
+      Dir.mkdir(@gitstorage) unless File.exist?(@gitstorage)
+      raise "Error, #{@gitstorage} is not a directory" unless File.directory?(@gitstorage)
+
       @statistics = {}
+    end
+
+    def git_checkout_url(url)
+      loc = ""
+
+      Dir.chdir(@gitstorage) do
+        system("git clone #{url}")
+      end
+
+      # pending
+      return loc
     end
 
     def process_directory(dir)
