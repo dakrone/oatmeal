@@ -35,7 +35,67 @@ module Oatmeal
   class Complexid
     LOG2 = Math.log(2)
 
-    def self.transition_matrix(filename)
+    attr_reader :statistics
+
+    def initialize(dbconf)
+      @dbconfig = YAML::load(File.open(dbconf))
+      @statistics = {}
+    end
+
+    def process_directory(dir)
+      $stdout.sync = true
+      begin
+        Dir.chdir(dir) do
+          Find.find(".") do |file|
+            next unless /\.rb$/ =~ file
+            groupname = File.dirname(file).split(%r{/})[1]
+            groupname = File.basename(file)[/[^.]+/] if groupname.nil?
+            puts "Processing #{file} (under #{groupname})"
+
+            t_matrix, freqs, indices, tokens = transition_matrix(file)
+            if t_matrix
+              h_rate = entropy_rate(t_matrix)
+              if h_rate
+                mu = stationary_distribution(t_matrix)
+              else
+                h_rate = freqs.inject([0,0]) do |(s,idx), p|
+                [s + p * H(t_matrix.row(idx)), idx + 1]
+                end.first
+                mu = freqs
+              end
+
+              h_iid = H(mu)
+              h_eq1 = mu.inject([0,0]) do |(s,idx), p|
+              non_zero = t_matrix.row(idx).to_a.select{|x| x > 0}.size
+              non_zero = [1, non_zero].max
+              [s + p * Math.log(non_zero) / LOG2, idx + 1]
+              end.first
+              h_eq2 = Math.log(t_matrix.row_size) / LOG2
+
+              (@statistics[groupname] ||= []) << [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
+              p [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
+              # [file, 
+              #  h_rate  either the entropy rate of the markov chain if there is
+              #          a stationary distribution or the weighted sum of the
+              #          entropies for each row in the transition matrix, based on
+              #          the observed frequencies for the prev token type
+              #  h_eq1   entropy if all possible (as observed by an instance of the
+              #          process) choices given the prev token are equidistributed
+              #  h_iid   we ignore the markovian process and consider this as a
+              #          stochastic process of indep. identically distributed
+              #          random variables (so all tokens are considered independent)
+              #  h_eq2   entropy per token if we consider them all equally probable
+              #  tokens  number of tokens
+              # ]
+            end
+          end
+        end
+      end
+    end
+
+
+    private
+    def transition_matrix(filename)
       indices = Hash.new{|h,k| h[k] = indices.size}
       probs = []
       last_tok = nil
@@ -71,7 +131,7 @@ module Oatmeal
       [Matrix.rows(probs.map{|row| row + [0] * (cols - row.size)}), freqs, indices, ntokens]
     end
 
-    def self.H(probs)
+    def H(probs)
       probs.to_a.inject(0) do |s,x|
         if x < 1e-6 # for continuity
           s
@@ -81,7 +141,7 @@ module Oatmeal
       end
     end
 
-    def self.entropy_rate(t_matrix)
+    def entropy_rate(t_matrix)
       mu = stationary_distribution(t_matrix)
       return nil if mu.nil?
       ret = 0
@@ -102,63 +162,15 @@ if __FILE__ == $0
   require 'yaml'
 
   dir = ARGV[0]
-  LOG2 = Math.log(2)
 
-  $stdout.sync = true
-  begin
-    statistics = {}
-    Dir.chdir(dir) do
-      Find.find(".") do |file|
-        next unless /\.rb$/ =~ file
-        groupname = File.dirname(file).split(%r{/})[1]
-        groupname = File.basename(file)[/[^.]+/] if groupname.nil?
-        puts "Processing #{file} (under #{groupname})"
+  complexid = Oatmeal::Complexid.new("../../db/dev.yml")
 
-        t_matrix, freqs, indices, tokens = Oatmeal::Complexid.transition_matrix(file)
-        if t_matrix
-          h_rate = Oatmeal::Complexid.entropy_rate(t_matrix)
-          if h_rate
-            mu = stationary_distribution(t_matrix)
-          else
-            h_rate = freqs.inject([0,0]) do |(s,idx), p|
-            [s + p * Oatmeal::Complexid.H(t_matrix.row(idx)), idx + 1]
-            end.first
-            mu = freqs
-          end
+  complexid.process_directory(dir)
 
-          h_iid = Oatmeal::Complexid.H(mu)
-          h_eq1 = mu.inject([0,0]) do |(s,idx), p|
-                    non_zero = t_matrix.row(idx).to_a.select{|x| x > 0}.size
-                    non_zero = [1, non_zero].max
-                    [s + p * Math.log(non_zero) / LOG2, idx + 1]
-                  end.first
-          h_eq2 = Math.log(t_matrix.row_size) / LOG2
+  puts "=" * 80
+  puts complexid.statistics.to_yaml
 
-          (statistics[groupname] ||= []) << [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
-          p [file, h_rate, h_eq1, h_iid, h_eq2, tokens]
-          # [file, 
-          #  h_rate  either the entropy rate of the markov chain if there is
-          #          a stationary distribution or the weighted sum of the
-          #          entropies for each row in the transition matrix, based on
-          #          the observed frequencies for the prev token type
-          #  h_eq1   entropy if all possible (as observed by an instance of the
-          #          process) choices given the prev token are equidistributed
-          #  h_iid   we ignore the markovian process and consider this as a
-          #          stochastic process of indep. identically distributed
-          #          random variables (so all tokens are considered independent)
-          #  h_eq2   entropy per token if we consider them all equally probable
-          #  tokens  number of tokens
-          # ]
-        end
-      end
-    end
-
-  ensure
-    #File.open("lexical.entropy", "w"){|f| Marshal.dump(statistics, f) }
-    puts "=" * 80
-    puts statistics.to_yaml
-    raise if $!
-  end
+  # TODO: Add to directory
 
 end
 
