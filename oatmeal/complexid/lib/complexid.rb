@@ -5,6 +5,7 @@
 require 'matrix'
 require 'find'
 require 'fileutils'
+require 'yaml'
 
 class Object
   _stationary_distribution_cache = {}
@@ -52,7 +53,7 @@ module Oatmeal
       Dir.mkdir(user_dir)
 
       Dir.chdir(user_dir) do
-        system("git clone #{@url}")
+        system("git clone --quiet #{@url}")
         return nil unless $? == 0
       end
       self
