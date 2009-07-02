@@ -7,6 +7,24 @@ KNOWN_STATS = [SPEC_EXAMPLE_FILE, "0.570645834224529", "0.586986749301636", "3.4
 SPEC_URL = "git://github.com/dakrone/ricepaper.git"
 
 require 'complexid'
+require 'tmpdir'
+
+describe Oatmeal::GitRepo do
+  before :each do
+    @gr = Oatmeal::GitRepo.new(SPEC_URL)
+  end
+
+  it 'should correctly parse the url, username and project name' do
+    @gr.url.should == SPEC_URL
+    @gr.user.should == 'dakrone'
+    @gr.project.should == 'ricepaper'
+  end
+
+  it 'should check out the project from git' do
+    repo = @gr.clone(Dir.tmpdir)
+    repo.should_not be_nil
+  end
+end
 
 describe Oatmeal::Complexid do
   before :each do
