@@ -6,6 +6,7 @@ require 'matrix'
 require 'find'
 require 'fileutils'
 require 'yaml'
+require 'activerecord'
 
 require 'gitobjects'
 
@@ -103,6 +104,16 @@ module Oatmeal
         end
       end
       @statistics
+    end
+
+    def push_stats
+      return nil if @statistics.empty?
+
+      nil # TODO: implement
+    end
+
+    def process_git_repo(url)
+      nil
     end
 
 

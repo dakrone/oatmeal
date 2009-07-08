@@ -1,0 +1,6 @@
+should correctly parse the url, username and project name
+should initialize properly
+should process a directory of files and return a Hash
+should return the known statistics about a.rb
+should fetch work items out of the queue
+should put the results in the database

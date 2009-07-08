@@ -20,6 +20,7 @@ describe Oatmeal::Repository do
     @gr.url.should == SPEC_URL
     @gr.user.should == 'dakrone'
     @gr.project.should == 'ricepaper'
+    @gr.project_dir.should =~ /git-storage\/dakrone\/ricepaper/
   end
 
   it 'should check out the project from git' do
@@ -43,6 +44,11 @@ describe Oatmeal::Complexid do
     @c.process_directory(SPEC_FILE_DIR).should be_instance_of(Hash)
   end
 
+  it 'should be able process a url from checkout to statistics' do
+    stats = @c.process_git_repo(SPEC_URL)
+    stats.should be_instance_of(Hash)
+  end
+
   it 'should return the known statistics about a.rb' do
     stats = @c.process_directory(SPEC_FILE_DIR)[SPEC_EXAMPLE_BASE][0]
     stats[0].should == KNOWN_STATS[0]
@@ -59,6 +65,9 @@ describe Oatmeal::Complexid do
 
   it 'should fetch work items out of the queue'
 
-  it 'should put the results in the database'
+  it 'should put the results in the database' do
+    @c.process_directory(SPEC_FILE_DIR)
+    @c.push_stats.should be_true
+  end
 
 end

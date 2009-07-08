@@ -1,10 +1,11 @@
 require 'activerecord'
+require 'find'
 
 module Oatmeal
   class Repository < ActiveRecord::Base
     has_many :commits
 
-    attr_reader :url, :user, :project
+    attr_reader :url, :user, :project, :project_dir
 
     def initialize(url, base_dir = File.dirname(__FILE__) + "/../git-storage")
       raise "Git URL invalid" if url.nil?
@@ -14,9 +15,10 @@ module Oatmeal
       @project = m[2]
 
       @gitstorage = base_dir
+      @project_dir = @gitstorage + "/" + @user + "/" + @project
       Dir.mkdir(@gitstorage) unless File.exist?(@gitstorage)
 
-      raise "Error, #{@gitstorage} is not a directory" unless File.directory?(@gitstorage)
+      raise "#{@gitstorage} is not a directory" unless File.directory?(@gitstorage)
       raise "Unable to parse git URL" if (@url.nil? or @user.nil? or @project.nil?)
     end
 
@@ -32,7 +34,17 @@ module Oatmeal
       self
     end
 
-    def find_files
+    # Return an array of all globbed files. Glob is checked on _basename_ of a
+    # file, not full path
+    def find_files(glob = '*.rb')
+      files = []
+      Find.find(@project_dir) do |path|
+        if File.basename(path) =~ /#{glob}/
+          puts "Found a file: #{path}"
+          files << path
+        end
+      end
+      files
     end
 
     class Commit < ActiveRecord::Base
