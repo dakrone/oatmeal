@@ -7,6 +7,8 @@ require 'find'
 require 'fileutils'
 require 'yaml'
 
+require 'gitobjects'
+
 class Object
   _stationary_distribution_cache = {}
   max_iterations = 10
@@ -35,32 +37,6 @@ end
 
 module Oatmeal
 
-  class GitRepo
-    attr_reader :url, :user, :project
-
-    def initialize(url)
-      raise "Git URL invalid" if url.nil?
-      m = url.match(/git:\/\/github\.com\/(\w+)\/(.*)\.git/)
-      @url = m[0]
-      @user = m[1]
-      @project = m[2]
-      raise "Unable to parse git URL" if (@url.nil? or @user.nil? or @project.nil?)
-    end
-
-    def clone(base_dir)
-      user_dir = base_dir + "/" + @user
-      FileUtils.rm_rf(user_dir) if File.exist?(user_dir)
-      Dir.mkdir(user_dir)
-
-      Dir.chdir(user_dir) do
-        system("git clone --quiet #{@url}")
-        return nil unless $? == 0
-      end
-      self
-    end
-
-  end
-
   class Complexid
     LOG2 = Math.log(2)
 
@@ -77,7 +53,7 @@ module Oatmeal
     end
 
     def git_checkout_url(url)
-      repo = GitRepo.new(url)
+      repo = Repository.new(url)
       return nil unless repo.clone(@gitstorage)
       repo
     end

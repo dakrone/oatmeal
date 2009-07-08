@@ -28,7 +28,7 @@ end
 
 describe Oatmeal::Complexid do
   before :each do
-    @c = Oatmeal::Complexid.new(File.dirname(__FILE__) + "/../../../db/dev.yml")
+    @c = Oatmeal::Complexid.new(File.dirname(__FILE__) + "/../../../db/env.yml")
   end
 
   it 'should initialize properly' do
