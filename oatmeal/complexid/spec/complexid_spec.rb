@@ -5,13 +5,15 @@ SPEC_EXAMPLE_BASE = "a"
 SPEC_EXAMPLE_FILE = "./a.rb"
 KNOWN_STATS = [SPEC_EXAMPLE_FILE, "0.570645834224529", "0.586986749301636", "3.40291187981663", "3.70043971814109", "22"]
 SPEC_URL = "git://github.com/dakrone/ricepaper.git"
+ENV_FILE = File.dirname(__FILE__) + "/../../../db/env.yml"
 
+require 'gitobjects'
 require 'complexid'
 require 'tmpdir'
 
-describe Oatmeal::GitRepo do
+describe Oatmeal::Repository do
   before :each do
-    @gr = Oatmeal::GitRepo.new(SPEC_URL)
+    @gr = Oatmeal::Repository.new(SPEC_URL)
   end
 
   it 'should correctly parse the url, username and project name' do
@@ -23,12 +25,14 @@ describe Oatmeal::GitRepo do
   it 'should check out the project from git' do
     repo = @gr.clone(Dir.tmpdir)
     repo.should_not be_nil
+    File.exist?(DIr.tmpdir + "/dakrone").should be_true
+    File.exist?(DIr.tmpdir + "/dakrone/ricepaper").should be_true
   end
 end
 
 describe Oatmeal::Complexid do
   before :each do
-    @c = Oatmeal::Complexid.new(File.dirname(__FILE__) + "/../../../db/env.yml")
+    @c = Oatmeal::Complexid.new(ENV_FILE)
   end
 
   it 'should initialize properly' do
