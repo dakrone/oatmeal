@@ -26,8 +26,8 @@ describe Oatmeal::Repository do
   it 'should check out the project from git' do
     repo = @gr.clone(Dir.tmpdir)
     repo.should_not be_nil
-    File.exist?(DIr.tmpdir + "/dakrone").should be_true
-    File.exist?(DIr.tmpdir + "/dakrone/ricepaper").should be_true
+    File.exist?(Dir.tmpdir + "/dakrone").should be_true
+    File.exist?(Dir.tmpdir + "/dakrone/ricepaper").should be_true
   end
 end
 
