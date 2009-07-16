@@ -1,12 +1,14 @@
 #!/usr/bin/env ruby
 #
-# Code from: http://eigenclass.org/hiki/Lexical+complexity+in+Ruby
+# Complexity code from: http://eigenclass.org/hiki/Lexical+complexity+in+Ruby
 
 require 'matrix'
 require 'find'
 require 'fileutils'
 require 'yaml'
 require 'activerecord'
+require 'beanstalk-client'
+require 'thread'
 
 require 'gitobjects'
 
@@ -43,11 +45,54 @@ module Oatmeal
 
     attr_reader :statistics
 
-    def initialize(dbconf)
-      @dbconfig = YAML::load(File.open(dbconf))
+    # queue is a string containing a location of a beanstalk server
+    def initialize(dbenv, queue)
+      @dbenv = ActiveRecord::Base::establish_connection(dbenv)
+      @queue = Beanstalk::Pool.new([queue])
 
       @statistics = {}
+      @running = false
+
+      # Thread for running
+      @t = nil
     end
+
+
+    def start
+      raise "ComplexiD is already running!" if @running
+
+      @running = true
+      @t = Thread.new { 
+        trap "SIGTERM", Proc.new { puts "Dying!" }
+        STDERR.puts "ComplexiD Started."
+        while @running
+          begin
+            job = @queue.reserve(3)
+          rescue Exception => e
+            next
+          end
+
+          STDERR.puts "processing [#{job.body}]..."
+          STDERR.flush
+          process_git_repo(job.body) unless job.body.nil?
+          
+          job.delete
+        end
+
+      }
+    end
+
+    def running?
+      @running
+    end
+
+    def stop
+      STDERR.puts "Shutting down..."
+      @running = false
+      Thread.kill(@t)
+      STDERR.puts "ComplexiD Halted."
+    end
+
 
     def git_checkout_url(url)
       repo = Repository.new(url)
@@ -106,14 +151,22 @@ module Oatmeal
       @statistics
     end
 
-    def push_stats
+    def push_stats(stats=@statistics)
       return nil if @statistics.empty?
 
-      nil # TODO: implement
+      y stats
+      # TODO: implement
     end
 
+    # clone, calculate and push to db
     def process_git_repo(url)
-      nil
+
+      repo = git_checkout_url(url)
+      raise "Unable to check out git repo." if repo.nil?
+
+      process_directory(repo.project_dir)
+
+      push_stats
     end
 
 
